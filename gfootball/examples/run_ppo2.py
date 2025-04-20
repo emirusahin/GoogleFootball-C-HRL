@@ -67,73 +67,55 @@ flags.DEFINE_bool('dump_scores', False,
 flags.DEFINE_string('load_path', None, 'Path to load initial checkpoint from.')
 
 
-def create_single_football_env(iprocess, level, state, reward_experiment,
-                              dump_scores, dump_full_episodes, render):
-    """Creates gfootball environment."""
-    # Use the passed arguments instead of FLAGS.*
-    env = football_env.create_environment(
-        env_name=level, stacked=('stacked' in state),
-        rewards=reward_experiment,
-        logdir=logger.get_dir(),
-        write_goal_dumps=dump_scores and (iprocess == 0),
-        write_full_episode_dumps=dump_full_episodes and (iprocess == 0),
-        render=render and (iprocess == 0),
-        dump_frequency=50 if render and iprocess == 0 else 0)
-    env = monitor.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(),
-                                                                  str(iprocess)))
-    return env
+def create_single_football_env(iprocess):
+  """Creates gfootball environment."""
+  env = football_env.create_environment(
+      env_name=FLAGS.level, stacked=('stacked' in FLAGS.state),
+      rewards=FLAGS.reward_experiment,
+      logdir=logger.get_dir(),
+      write_goal_dumps=FLAGS.dump_scores and (iprocess == 0),
+      write_full_episode_dumps=FLAGS.dump_full_episodes and (iprocess == 0),
+      render=FLAGS.render and (iprocess == 0),
+      dump_frequency=50 if FLAGS.render and iprocess == 0 else 0)
+  env = monitor.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(),
+                                                               str(iprocess)))
+  return env
 
 
 def train(_):
-    """Trains a PPO2 policy."""
-    # --- Make sure you still have this section capturing the flag values ---
-    print("--- Capturing flag values ---")
-    level_val = FLAGS.level
-    state_val = FLAGS.state
-    reward_val = FLAGS.reward_experiment
-    dump_scores_val = FLAGS.dump_scores
-    dump_full_episodes_val = FLAGS.dump_full_episodes
-    render_val = FLAGS.render
-    num_envs_val = FLAGS.num_envs
-    print(f"--- Using num_envs: {num_envs_val} ---")
+  """Trains a PPO2 policy."""
+  vec_env = SubprocVecEnv([
+      (lambda _i=i: create_single_football_env(_i))
+      for i in range(FLAGS.num_envs)
+  ], context=None)
 
-    print("--- Creating SubprocVecEnv ---") # Or DummyVecEnv if you were testing that
-    # --- THIS is the line that needs correction ---
-    vec_env = SubprocVecEnv([
-      (lambda _i=i: create_single_football_env(
-            _i, level_val, state_val, reward_val, dump_scores_val,
-            dump_full_episodes_val, render_val))
-        for i in range(num_envs_val)
-    ], context=None)
+  # Import tensorflow after we create environments. TF is not fork sake, and
+  # we could be using TF as part of environment if one of the players is
+  # controlled by an already trained model.
+  import tensorflow.compat.v1 as tf
+  ncpu = multiprocessing.cpu_count()
+  config = tf.ConfigProto(allow_soft_placement=True,
+                          intra_op_parallelism_threads=ncpu,
+                          inter_op_parallelism_threads=ncpu)
+  config.gpu_options.allow_growth = True
+  tf.Session(config=config).__enter__()
 
-    # Import tensorflow after we create environments. TF is not fork sake, and
-    # we could be using TF as part of environment if one of the players is
-    # controlled by an already trained model.
-    import tensorflow.compat.v1 as tf
-    
-    ncpu = multiprocessing.cpu_count()
-    config = tf.ConfigProto(allow_soft_placement=True,
-                            intra_op_parallelism_threads=ncpu,
-                            inter_op_parallelism_threads=ncpu)
-    config.gpu_options.allow_growth = True
-    tf.Session(config=config).__enter__()
-
-    ppo2.learn(network=FLAGS.policy,
-                total_timesteps=FLAGS.num_timesteps,
-                env=vec_env,
-                seed=FLAGS.seed,
-                nsteps=FLAGS.nsteps,
-                nminibatches=FLAGS.nminibatches,
-                noptepochs=FLAGS.noptepochs,
-                max_grad_norm=FLAGS.max_grad_norm,
-                gamma=FLAGS.gamma,
-                ent_coef=FLAGS.ent_coef,
-                lr=FLAGS.lr,
-                log_interval=1,
-                save_interval=FLAGS.save_interval,
-                cliprange=FLAGS.cliprange,
-                load_path=FLAGS.load_path)
+  ppo2.learn(network=FLAGS.policy,
+             total_timesteps=FLAGS.num_timesteps,
+             env=vec_env,
+             seed=FLAGS.seed,
+             nsteps=FLAGS.nsteps,
+             nminibatches=FLAGS.nminibatches,
+             noptepochs=FLAGS.noptepochs,
+             max_grad_norm=FLAGS.max_grad_norm,
+             gamma=FLAGS.gamma,
+             ent_coef=FLAGS.ent_coef,
+             lr=FLAGS.lr,
+             log_interval=1,
+             save_interval=FLAGS.save_interval,
+             cliprange=FLAGS.cliprange,
+             load_path=FLAGS.load_path)
 
 
 if __name__ == '__main__':
-    app.run(train)
+  app.run(train)

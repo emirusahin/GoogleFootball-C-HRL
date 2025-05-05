@@ -60,3 +60,11 @@ python -m gfootball.play_game --action_set=full
 
 ### To train an agent
 Go to main.ipynb and run the cells! You will see that the longest cell in the notebook is the training script, it will show you for which scenerio you are training and how far you are in your training. <br>
+
+# Next Steps: <br> 
+- Train the agent on all scenerios <br>
+- Add a hierarchical design that uses different rewards to optimize for different parts of the game. Some examples: <br>
+1) Learn defending if the ball is in your half and the opponent is attacking <br>
+2) Learn creating an attack if the ball is in your half and you have the ball <br>
+3) Learn to score if the ball is in the opponent's half and you have the ball <br>
+4) Learn to press if the ball is in the opponent's half and they have the ball <br>

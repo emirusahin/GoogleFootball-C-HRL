@@ -68,3 +68,15 @@ Go to main.ipynb and run the cells! You will see that the longest cell in the no
 2) Learn creating an attack if the ball is in your half and you have the ball <br>
 3) Learn to score if the ball is in the opponent's half and you have the ball <br>
 4) Learn to press if the ball is in the opponent's half and they have the ball <br>
+
+# TA Feedback
+Methodology (34/40): 
+<br> - Abstract, introduction and motivation: The authors implemented PPO in the GRF environment. This focuses on using a typical RL algorithm in a widely used environment with curriculum design, which is a suitable course project topic.
+<br> - Background and problem formulation: The choice of problem settings is clean and simple, respecting the limited resources. Considering the non-trivial research question and the large number of design choices to try, it's a valid pick for the problem settings.
+<br> Related work: well done!
+<br> - Contribution and clarity of proposed method: The contribution is satisfactory. The method is clearly stated. This work could be further extended by trying 1-2 more policy-based algorithms on more configurations of the GRF environment
+<br> Experiments and coding (18/20): The readme is clearly presented with instructions to run the code easily. The experiments are, in general, carefully designed. The results are well presented. Adding training curves of different curricula in the appendix would be better.
+<br> Writing (10/10): Excellent writing.
+<br> Presentation (18/20): Overall, great presentation. The video slightly exceeds 4mins. Try to focus on key contributions and findings.
+<br> Late penalty: (2^3)% * 90 = 7.2
+<br> Well done! Best of luck in your future endeavours!

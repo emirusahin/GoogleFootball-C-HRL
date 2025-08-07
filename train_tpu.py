@@ -240,6 +240,9 @@ def train_loop(rank, flags):
                 obs = nxt
                 global_step += num_actors
 
+                if is_master and global_step % 100 == 0:
+                    print(f"[DEBUG] Stage {env_name} | Env steps: {global_step}")
+
             # compute GAE & returns
             with torch.no_grad(): _, nv = model(obs); nv = nv.squeeze()
             ob_buf = torch.stack(ob_buf)
@@ -335,8 +338,10 @@ def train_loop(rank, flags):
 
 def main():
     flags = parse_args()
-    xmp.spawn(train_loop, args=(flags,), nprocs=flags.num_cores, start_method='fork')
-
+    if flags.num_cores == 1:
+        print("DEBUG Single core mode, calling train_loop directly")
+        train_loop(0, flags)
+    else:
+        xmp.spawn(train_loop, args=(flags,), nprocs=None, start_method='fork')
 
 if __name__ == '__main__':
-    main()

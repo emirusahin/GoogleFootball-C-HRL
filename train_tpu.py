@@ -345,3 +345,4 @@ def main():
         xmp.spawn(train_loop, args=(flags,), nprocs=None, start_method='fork')
 
 if __name__ == '__main__':
+    main()
